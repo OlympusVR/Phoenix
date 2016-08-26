@@ -43,6 +43,7 @@ namespace Phoenix {
         //Gets needed references  
         private void Awake()
         {
+            gameObject.tag = "Anchor";
             _targetPool = gameObject.AddComponent<ObjectPool>();
             _targetPool.objectPrefab = Resources.Load("Prefabs/TargetPrefabs/Target") as GameObject;
         }
@@ -52,9 +53,9 @@ namespace Phoenix {
 
         private void Update()
         {
-            //transform.localPosition += _lastMove*Time.deltaTime;
-            //_lastMove = _moveSet(transform.localPosition, _lastMove);
-    
+            transform.localPosition += _lastMove*Time.deltaTime;
+            _lastMove = _moveSet(transform.localPosition, _lastMove,gameObject);
+            
         }
 
         public void setInfo(AnchorInfo copy)

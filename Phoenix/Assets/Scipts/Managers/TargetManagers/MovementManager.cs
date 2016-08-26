@@ -4,11 +4,12 @@ using System.Collections.Generic;
 namespace Phoenix
 {
 
-    public delegate Vector3 Movement(Vector3 position, Vector3 direction);
+    public delegate Vector3 Movement(Vector3 position, Vector3 direction,GameObject obj);
 
     public static class MovementManager
     {
         private static Vector3 ecMult=Random.insideUnitSphere;
+        private static GameObject _playerPoint;
 
         public static Vector3 eccentricityModifier
         {
@@ -16,15 +17,23 @@ namespace Phoenix
             set { ecMult = value; }
         }
         
+        public static GameObject playerPoint
+        {
+            get { return _playerPoint; }
+            set { _playerPoint = value; }
+        }
+
         public static Movement generateTargetMovement(float minDistance,float maxDistance,float speed,float eccentricity = 1.0f)
         {
             Movement returnedMovement;
-            returnedMovement = (Vector3 position,Vector3 direction) =>
+            //This movement is too "erratic" making new movement for a simple revolve
+            returnedMovement = (Vector3 position,Vector3 direction,GameObject Obj) =>
             {
                 Vector3 newDirection = new Vector3();
                 if (position.sqrMagnitude > maxDistance * maxDistance)
                 {
-                    newDirection = Vector3.Cross(Vector3.Cross(position + ecMult * eccentricity, direction), direction).normalized * eccentricity;
+                    newDirection = direction.normalized +Vector3.Cross(Vector3.Cross(position + eccentricityModifier * (eccentricity), direction), direction).normalized * eccentricity;
+                    if (Vector3.Angle(position, newDirection) < 90) newDirection =  Vector3.Cross(position + eccentricityModifier * (eccentricity), direction).normalized;
                     if (Vector3.Angle(direction, position) > 90)
                     {
                         newDirection = direction.normalized * eccentricity;
@@ -32,7 +41,7 @@ namespace Phoenix
                 }
                 else if (position.sqrMagnitude < minDistance * minDistance)
                 {
-                    newDirection = Vector3.Cross(direction, Vector3.Cross(position + ecMult * eccentricity, direction)).normalized * eccentricity;
+                    newDirection = Vector3.Cross(direction, Vector3.Cross(position + eccentricityModifier * eccentricity, direction)).normalized * eccentricity;
                     if (Vector3.Angle(direction, position) > 90)
                     {
                         newDirection = direction.normalized*eccentricity;
@@ -40,9 +49,23 @@ namespace Phoenix
                 }
                 else
                 {
-                    newDirection = ecMult * speed * eccentricity * 0.001f;
+                    newDirection = eccentricityModifier * speed * eccentricity * 0.001f;
                 }
                 newDirection = newDirection + direction.normalized;
+                return newDirection.normalized*speed;
+            };
+
+            returnedMovement = (Vector3 position, Vector3 direction, GameObject Obj) =>
+            {
+                Vector3 newDirection = new Vector3();
+
+
+                newDirection = Vector3.Cross(position, direction);
+                newDirection = Vector3.Cross(newDirection, position);
+                newDirection += -position * (position.sqrMagnitude - minDistance * minDistance);
+
+                newDirection += Vector3.Cross(Obj.transform.InverseTransformPoint(playerPoint.transform.position),position).normalized;
+
                 return newDirection.normalized*speed;
             };
             return returnedMovement;
@@ -51,20 +74,19 @@ namespace Phoenix
 
 
 
-        public static Movement generateAnchorMovement(Vector3 initialPosition,float distance,float speed,float ecentricity)
+        public static Movement generateAnchorMovement(Vector3 initialPosition,GameObject target,float time)
         {
+            float runTime = 0;
+
             //Anchor movement will be linear
-            return (Vector3 position, Vector3 oldMovement) =>
+            return (Vector3 position, Vector3 oldMovement,GameObject obj) =>
             {
-                Vector3 newMovement = new Vector3(oldMovement.x,oldMovement.y,oldMovement.z);
-                //TODO: make actual movement algorithm
-                if ((position - initialPosition).sqrMagnitude > distance * distance)
-                {
-                    newMovement = new Vector3(-oldMovement.x, -oldMovement.y, -oldMovement.z);
-                }
-
-
-                return newMovement.normalized*speed;
+                runTime += Time.deltaTime;
+                Vector3 difference = (target.transform.localPosition - position);
+                if (runTime >= time) return difference;
+                else Debug.Log(time-runTime);
+                if ((position - target.transform.localPosition).sqrMagnitude < 0.4) return difference;
+                return (target.transform.localPosition-position)/(time-runTime);
             };
         }
 

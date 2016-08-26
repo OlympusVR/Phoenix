@@ -26,7 +26,7 @@ namespace Phoenix
         private float DISTANCELOGBASE = 2;
         private float MAXTARGETSCALE = 0.03f;
         private float MINTARGETSCALE = 0.02F;
-        private float TARGETSPEEDSCALE = 0.1F;
+        private float TARGETSPEEDSCALE = 0.05F;
 
         #endregion
 
@@ -36,6 +36,11 @@ namespace Phoenix
         private int _anchorCount;
         private int _anchorOn;
         private GameObject[] _activeAnchor;
+
+        [SerializeField]
+        protected GameObject _anchorMoveToPoint;
+        [SerializeField]
+        protected GameObject _PlayerPoint;
 
         [SerializeField]
         private ObjectPool _getAnchor;
@@ -77,9 +82,8 @@ namespace Phoenix
                 currentAnchor.initialPosition = position;
                 currentAnchor.initialMovement = initialMovement;
                 currentAnchor.moveSet = MovementManager.generateAnchorMovement(initialMovement, 
-                        anchorRadius, 
-                        difficultySetting, 
-                        difficultySetting / 6f);
+                        _anchorMoveToPoint, 
+                        10);
                 _anchorList[i] = currentAnchor;
             }
             //Resets the enumerator to start
@@ -181,6 +185,10 @@ namespace Phoenix
             _getAnchor = gameObject.AddComponent<ObjectPool>();
             _getAnchor.objectPrefab = Resources.Load("Prefabs/TargetPrefabs/Anchor") as GameObject;
             initializeWave(100.002f, 1);
+            if (_PlayerPoint != null)
+            {
+                MovementManager.playerPoint = _PlayerPoint;
+            }
         }
     }
 }
