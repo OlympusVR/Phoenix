@@ -50,6 +50,8 @@ namespace Phoenix
         public Transform magazinePosition;
         #endregion
 
+        GunAnimations gunAnim;
+
         #region HAPTIC FEEDBACK VARS
         float VibrationLength = 0.1f;
         ushort VibrationIntensity = 2000;
@@ -89,6 +91,11 @@ namespace Phoenix
         #endregion
 
         #region Unity Methods
+        protected override void Awake()
+        {
+            base.Awake();
+            gunAnim = GetComponent<GunAnimations>();
+        }
         protected override void Start()
         {
             //before doing anything, we should initialize the flag values for the gun or next statement will not work
@@ -201,6 +208,7 @@ namespace Phoenix
                 tempBullet.transform.position = firePoint.position;
                 tempBullet.transform.rotation = firePoint.rotation;
                 tempBullet.GetComponent<Bullet>().initialize();
+                gunAnim.playShootAnim();
                 tempBullet = null;
                 AttachedHand.LongHapticPulse(VibrationLength, VibrationIntensity);
 
@@ -209,6 +217,7 @@ namespace Phoenix
                     isEngaged = false;
                 }
             }
+
         }
         
         public IEnumerator disableMagazineCollider()
