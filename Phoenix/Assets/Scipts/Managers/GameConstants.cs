@@ -34,7 +34,8 @@ namespace Phoenix
         {
             { WeaponType.Automatic, new GunTypeInitValues(_isAutomatic:true, _isInfinite: true)},
             { WeaponType.Semiautomatic, new GunTypeInitValues(_needsEnagement:true)},
-            { WeaponType.Charge, new GunTypeInitValues(_isInfinite:true, _isCharge:true)}
+            { WeaponType.Charge, new GunTypeInitValues(_isInfinite:true, _isCharge:true)},
+            { WeaponType.Repeater,new GunTypeInitValues(_isRepeater:true) }
         };
     }
 

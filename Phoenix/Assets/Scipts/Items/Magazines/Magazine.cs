@@ -5,9 +5,10 @@ using System.Collections;
 //isEquipped from the Magazines perspective means the Magazine is inside a gun
 namespace Phoenix
 {
-    // This class will be implemented later
+   //Currently not in use
+   
     public class Magazine : NVRInteractableItem
-    {
+    {/*
         //the name of the magazine
         public string MagazineName;
 
@@ -57,7 +58,7 @@ namespace Phoenix
 
             base.Start();
             GameObject bulletPrefab = Resources.Load("Prefabs/BulletPrefabs/Bullet") as GameObject;
-          bullet = bulletPrefab.GetComponent<Bullet>();
+             bullet = bulletPrefab.GetComponent<Bullet>();
             if (myGun != null)
             {
                 isEquipped = true;
@@ -115,5 +116,6 @@ namespace Phoenix
             StopCoroutine(enableCollider());
         }
         #endregion
+        */
     }
 }

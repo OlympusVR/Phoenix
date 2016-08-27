@@ -18,39 +18,47 @@ namespace Phoenix
 
         [Header("Fields below from Gun class")]
         [Space(15)]
-        //can continuously shoot bullets without reload
         [HideInInspector]
         private bool _isInfinite = true;
-        //whether the gun needs to be engaged AFTER reloading only
         [HideInInspector]
         public bool needsEngagment = false;
-        //true if the gun is automatic false if the gun is semi automatic
+        //true if the gun is automatic.
         [HideInInspector]
         public bool isAutomatic;
         // is the gun a charge type weapon
         [HideInInspector]
         public bool isCharge = false;
-        //true if the gun needs to re-engage after every shot false otherwise
         [HideInInspector]
         public bool isRepeater = false;
         #endregion
+
 
         #region AUTOMATIC VARIABLES
         public float timeBetweenShots = 0.5f;
         public float timeSinceLastShot = 0;
         #endregion
 
-        public bool isEngaged = false;
+        public bool _isEngaged; 
         public SlideEngage SlideEngage;
         public Transform firePoint;
 
-        #region MAGAZINE VARIABLES
+        /*#region MAGAZINE VARIABLES
         public Magazine currentMagazine;
         public float secondsAfterDetach = 0.2f;
         public Transform magazinePosition;
+        #endregion*/
+        #region GUN ANIMATION VARS
+        protected GunAnimations gunAnim;
+        //Just doing here since only reason for mag class now would be bullets, might as well put in here.
+        //This prefab will change depending on kind of gun, if charge or whatever. For now it's all same bullet.
+        //I'm thinking of using switch case for tag of game object this script is on to determine which bullet prefab
+        //to use.
         #endregion
-
-        GunAnimations gunAnim;
+        #region BULLET VARS
+        protected GameObject bulletPrefab;
+        public int _amountOfBullets;
+        public int _maxBullets;
+        #endregion
 
         #region HAPTIC FEEDBACK VARS
         float VibrationLength = 0.1f;
@@ -58,18 +66,14 @@ namespace Phoenix
         #endregion
 
         #region Properties
-        // isLoaded means there is a magazine
-        public bool isLoaded
-        {
-            get { return currentMagazine != null; }
-        }
 
         // Below are properties for whther the user is pressing the left or right pad buttons
         public bool rightPadButtonDown
         {
             get
-            { return  AttachedHand.Controller.GetPressDown(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad) &&
-                          (AttachedHand.Controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)[0] > 0.05f);
+            {
+                return AttachedHand.Controller.GetPressDown(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad) &&
+                            (AttachedHand.Controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)[0] > 0.05f);
             }
         }
 
@@ -81,8 +85,20 @@ namespace Phoenix
                             (AttachedHand.Controller.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad)[0] < 0.05f);
             }
         }
-
-        public bool IsInfinite
+        //This returns whether or not the gun is engaged.
+        bool IsEngaged
+        {
+            get { return _isEngaged; }
+            set { _isEngaged = value; }
+        }
+        //Amount of bullets until need to engage again.
+        int CurrentBullets
+        {
+            get { return _amountOfBullets; }
+            set { _amountOfBullets = value; }
+        }
+      
+        bool IsInfinite
         {
             get { return _isInfinite; }
             set { _isInfinite = value; }
@@ -95,6 +111,7 @@ namespace Phoenix
         {
             base.Awake();
             gunAnim = GetComponent<GunAnimations>();
+            bulletPrefab = Resources.Load("Prefabs/BulletPrefabs/Bullet") as GameObject;
         }
         protected override void Start()
         {
@@ -102,45 +119,35 @@ namespace Phoenix
             initWeaponFlags(GameConstants.gunTypeInitValues[weaponType]);
 
             base.Start();
-            if (needsEngagment)
+            if (!IsEngaged)
             {
                 SlideEngage = GetComponentInChildren<SlideEngage>();
-                if(SlideEngage!= null)
+                if (SlideEngage != null)
                     SlideEngage.setEngage(engageGun);
             }
-
-            //We need to initialize the image
-            initWeaponImage();
+            //Sets which gun animations to play.
+            gunAnim.GunToAnimate = gameObject.name;
+            //Regardless of guntype this assignment will happen, if infinite it will never hit 0 so engage will never equal false for infinite.
+            CurrentBullets = _maxBullets;
+            
+            //This will be apart of UI which Ron is doing, so getting rid of it here.
+            //We need to initialize the image, for UI.
+            //initWeaponImage();
         }
 
 
         protected override void Update()
         {
             base.Update();
-
-            //only drop magazine if the gun currently has a magazine and does not shoot infinitly
-            if (AttachedHand != null)
+                 
+            if (leftPadButtonDown)
             {
-                if (rightPadButtonDown)
-                {
-                    if (!IsInfinite)
-                    {
-                        dropCurrentMagazine();
-                    }
-                }
-
-                //The gun needs to be loaded, and needs to have bullets and should not already be engaged to engage it
-                if (leftPadButtonDown)
-                {
-                    if (needsEngagment)
-                    {
-                        if (isLoaded && !isEngaged)
-                        {
-                            isEngaged = true;
-                        }
-                    }
-                }
-            }        
+                SlideEngage.setEngage(engageGun);
+            }
+            if (timeSinceLastShot == 0)
+            {
+                timeSinceLastShot += Time.deltaTime;
+            }
         }
         #endregion
 
@@ -148,9 +155,10 @@ namespace Phoenix
         public override void UseButtonDown()
         {
             // do not do this if the gun uses a charging mechanism instead
+            //I could implement charge mechanic later, so I'll leave this as is.
             if (!isCharge)
             {
-                gunMechanics();
+                gunMechanicsSemiAuo();
             }
         }
 
@@ -158,7 +166,8 @@ namespace Phoenix
         // thus, this only works if your na automatic weapon
         public override void UseButtonPressed()
         {
-            if (isAutomatic) autoGunMechanics();
+            if (isAutomatic)
+                gunMechanicsAuto();
         }
 
         //When an autonmatic is shooting, we need to reset the time because 
@@ -166,13 +175,15 @@ namespace Phoenix
         public override void UseButtonUp()
         {
             if (isAutomatic)
-            {
                 timeSinceLastShot = 0;
-            }
+            //Only shoot on button up when it's a charge Gun.
+            if (isCharge)
+                shootGun();
         }
         #endregion
 
         #region Methods
+        //Initializes all of the bools to the corresponding gun type;
         void initWeaponFlags(GunTypeInitValues _gunInitValues)
         {
             IsInfinite = _gunInitValues.isInfinite;
@@ -182,13 +193,13 @@ namespace Phoenix
             isRepeater = _gunInitValues.isRepeater;
         }
 
-        //Temporary
         private void engageGun()
         {
-            isEngaged = true;
+            _amountOfBullets = _maxBullets;
+            IsEngaged = _amountOfBullets > 0;
         }
 
-        protected void dropCurrentMagazine()
+        /*protected void dropCurrentMagazine()
         {
             if (isLoaded)
             {
@@ -198,90 +209,84 @@ namespace Phoenix
             }
 
             isEngaged = false;
-        }
-
-        virtual protected void shootGun()
+        }*/
+      
+        private GameObject spawnBullet()
         {
-            if (currentMagazine.hasBullets)
+            GameObject bullet = Instantiate(bulletPrefab);
+            return bullet;
+        }
+       
+        virtual protected IEnumerator shootGun()
+        {
+
+            gunAnim.playShootAnim();
+            //This delay puts firing bullet and animation in sync.
+            yield return new WaitForSeconds(gunAnim.getAnimSpeed);
+            GameObject tempBullet = spawnBullet();
+            tempBullet.transform.position = firePoint.position;
+            tempBullet.transform.rotation = firePoint.rotation;
+            tempBullet.GetComponent<Bullet>().initialize();
+            //If it's not infinite or doesn't need engagement then minus current bullets
+            if (!IsInfinite && !needsEngagment)
             {
-                GameObject tempBullet = currentMagazine.getBullet;
-                tempBullet.transform.position = firePoint.position;
-                tempBullet.transform.rotation = firePoint.rotation;
-                tempBullet.GetComponent<Bullet>().initialize();
-                gunAnim.playShootAnim();
+                --CurrentBullets;
+                if (CurrentBullets <= 0)
+                    IsEngaged = false;
+            }
                 tempBullet = null;
-                AttachedHand.LongHapticPulse(VibrationLength, VibrationIntensity);
+            AttachedHand.LongHapticPulse(VibrationLength, VibrationIntensity);
 
-                if (isRepeater)
-                {
-                    isEngaged = false;
-                }
-            }
-
-        }
-        
-        public IEnumerator disableMagazineCollider()
-        {
-            magazinePosition.gameObject.GetComponent<BoxCollider>().enabled = false;
-            yield return new WaitForSeconds(secondsAfterDetach);
-            magazinePosition.gameObject.GetComponent<BoxCollider>().enabled = true;
-            StopCoroutine(disableMagazineCollider());
+           
         }
 
-        
-        // the mechanics for the automatic guns
-        void autoGunMechanics()
+
+
+        /*  public IEnumerator disableMagazineCollider()
+          {
+              magazinePosition.gameObject.GetComponent<BoxCollider>().enabled = false;
+              yield return new WaitForSeconds(secondsAfterDetach);
+              magazinePosition.gameObject.GetComponent<BoxCollider>().enabled = true;
+              StopCoroutine(disableMagazineCollider());
+          }*/
+
+
+        // the mechanics for semi-automatic guns
+        private void gunMechanicsSemiAuo()
         {
-            if (isLoaded)
+
+            if (!IsEngaged)
             {
-                if (needsEngagment)
-                {
-                    if (isEngaged)
-                    {
-                        if (timeSinceLastShot >= timeBetweenShots)
-                        {
-                            shootGun();
-                            timeSinceLastShot = 0;
-                        }
-                        timeSinceLastShot += Time.deltaTime;
-                    }
-                }
-
-                else
-                {
-                    if (timeSinceLastShot >= timeBetweenShots)
-                    {
-                        shootGun();
-                        timeSinceLastShot = 0;
-                    }
-
-                    timeSinceLastShot += Time.deltaTime;
-                }
+                Debug.Log("Please engage your gun");
             }
-        } //for automatic guns only
+            else
+            {
+                    StartCoroutine(shootGun());   
+            }
+        }
 
-        //the mechanics for non-autmatic guns
-        void gunMechanics()
+
+        //The mechanics for automatic guns.
+        void gunMechanicsAuto()
         {
-            if (isLoaded)
+            if (!IsEngaged)
             {
-                if (needsEngagment)
-                {
-                    if (isEngaged)
-                    {
-                        shootGun();
-                    }
-                }
-                else
-                {
-                    shootGun();
-                }
+                Debug.Log("Please engage your gun");
             }
-        }// gun gun mechanics
+            else
+            {
+                //Since they can hold down trigger for automatics, need to put delay inbetween shots.
+                if (timeSinceLastShot >= timeBetweenShots)
+                {
+                    StartCoroutine(shootGun());
+                    timeSinceLastShot = 0;
+                }            
+            }
+        }
         #endregion
 
-
-    } // End of gun class
+    }
+    // End of gun class
 
 
     //this will allow us to automate the flag value assigning for each diff. type of weapon
