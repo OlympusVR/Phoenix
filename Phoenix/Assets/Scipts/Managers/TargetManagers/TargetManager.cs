@@ -12,11 +12,11 @@ namespace Phoenix
         private float PLAYAREAOFFSET = Mathf.Deg2Rad * 90;
         //Wave Constants
         private float PLAYAREA=Mathf.Deg2Rad*90;
-        private float ANCHORLOGBASE = 20;
+        private float ANCHORLOGBASE = 10;
         private float DISTANCESCALECONSTANT = 2;
         private float TIMESCALE = 10;
         //Anchor Constants
-        private float TARGETLOGBASE = 2;
+        private float TARGETLOGBASE = 5;
         private float ANCHORDISTANCE = 5;
         private float ANCHORBASEDISTANCE = 10;
         private float ANCHORRADIUSBASE = 5;
@@ -28,6 +28,7 @@ namespace Phoenix
         private float MINTARGETSCALE = 0.02F;
         private float TARGETSPEEDSCALE = 0.05F;
 
+        private bool simpleMove = true;
         #endregion
 
         private float timeCounter;
@@ -83,7 +84,7 @@ namespace Phoenix
                 currentAnchor.initialMovement = initialMovement;
                 currentAnchor.moveSet = MovementManager.generateAnchorMovement(initialMovement, 
                         _anchorMoveToPoint, 
-                        10);
+                        30- Mathf.Log(difficultyRating, ANCHORLOGBASE)*Random.value);
                 _anchorList[i] = currentAnchor;
             }
             //Resets the enumerator to start
@@ -101,7 +102,7 @@ namespace Phoenix
             TargetInfo[] tList = new TargetInfo[targetCount];
             for (int i = 0; i < targetCount; i++) 
             {
-                tList[i] = generateTarget(difficulty / targetCount,difficultySetting);
+                tList[i] = generateTarget(difficulty / targetCount,difficultySetting,i,targetCount);
             }
             return tList;
         }
@@ -112,21 +113,35 @@ namespace Phoenix
         /// <param name="difficulty"></param>
         /// <param name="difficultySetting"></param>
         /// <returns></returns>
-        private TargetInfo generateTarget(float difficulty,int difficultySetting)
+        private TargetInfo generateTarget(float difficulty,int difficultySetting,int current,int max)
         {
-            TargetInfo gen;
-            float maxDistance = Mathf.Log(difficulty, DISTANCELOGBASE) * MAXTARGETSCALE;
-            float minDistance = Mathf.Log(difficulty, DISTANCELOGBASE * 2)*MINTARGETSCALE;
-            //randomize Position and initial movement vector
-            Vector3 position = Random.insideUnitSphere*maxDistance;
-            Vector3 movement = Random.onUnitSphere;
-            movement = movement.normalized;
-            gen.initialPosition = position;
-            gen.initialMovement = movement;
-            gen.moveSet =  MovementManager.generateTargetMovement(minDistance, 
-                    maxDistance, 
-                    difficultySetting * TARGETSPEEDSCALE, 
-                    difficultySetting / 6F );
+            TargetInfo gen=new TargetInfo();
+            if (simpleMove)
+            {
+                float distance = 5*MAXTARGETSCALE;
+                float angle = 360 / max * current;
+                gen.initialPosition = new Vector3(distance * Mathf.Sin(Mathf.Deg2Rad * angle), distance * Mathf.Cos(Mathf.Deg2Rad * angle));
+                gen.initialMovement = Vector3.Cross(new Vector3(0,0,1),gen.initialPosition);
+                gen.moveSet = MovementManager.generateTargetMovement(distance,
+                    distance,
+                    difficultySetting * TARGETSPEEDSCALE,
+                    difficultySetting / 6F);
+            }
+            else
+            {
+                float maxDistance = Mathf.Log(difficulty, DISTANCELOGBASE) * MAXTARGETSCALE;
+                float minDistance = Mathf.Log(difficulty, DISTANCELOGBASE * 2) * MINTARGETSCALE;
+                //randomize Position and initial movement vector
+                Vector3 position = Random.insideUnitSphere * maxDistance;
+                Vector3 movement = Random.onUnitSphere;
+                movement = movement.normalized;
+                gen.initialPosition = position;
+                gen.initialMovement = movement;
+                gen.moveSet = MovementManager.generateTargetMovement(minDistance,
+                        maxDistance,
+                        difficultySetting * TARGETSPEEDSCALE,
+                        difficultySetting / 6F);
+            }
             return gen;
         }
         

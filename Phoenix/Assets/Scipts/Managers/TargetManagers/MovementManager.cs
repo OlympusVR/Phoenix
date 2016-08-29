@@ -10,6 +10,7 @@ namespace Phoenix
     {
         private static Vector3 ecMult=Random.insideUnitSphere;
         private static GameObject _playerPoint;
+        public static bool simpleMove=true;
 
         public static Vector3 eccentricityModifier
         {
@@ -26,48 +27,67 @@ namespace Phoenix
         public static Movement generateTargetMovement(float minDistance,float maxDistance,float speed,float eccentricity = 1.0f)
         {
             Movement returnedMovement;
-            //This movement is too "erratic" making new movement for a simple revolve
-            returnedMovement = (Vector3 position,Vector3 direction,GameObject Obj) =>
+            if (simpleMove)
             {
-                Vector3 newDirection = new Vector3();
-                if (position.sqrMagnitude > maxDistance * maxDistance)
-                {
-                    newDirection = direction.normalized +Vector3.Cross(Vector3.Cross(position + eccentricityModifier * (eccentricity), direction), direction).normalized * eccentricity;
-                    if (Vector3.Angle(position, newDirection) < 90) newDirection =  Vector3.Cross(position + eccentricityModifier * (eccentricity), direction).normalized;
-                    if (Vector3.Angle(direction, position) > 90)
-                    {
-                        newDirection = direction.normalized * eccentricity;
-                    }
-                }
-                else if (position.sqrMagnitude < minDistance * minDistance)
-                {
-                    newDirection = Vector3.Cross(direction, Vector3.Cross(position + eccentricityModifier * eccentricity, direction)).normalized * eccentricity;
-                    if (Vector3.Angle(direction, position) > 90)
-                    {
-                        newDirection = direction.normalized*eccentricity;
-                    }
-                }
-                else
-                {
-                    newDirection = eccentricityModifier * speed * eccentricity * 0.001f;
-                }
-                newDirection = newDirection + direction.normalized;
-                return newDirection.normalized*speed;
-            };
 
-            returnedMovement = (Vector3 position, Vector3 direction, GameObject Obj) =>
+                returnedMovement = (Vector3 position, Vector3 direction, GameObject Obj) =>
+                {
+
+                    Vector3 newDirection = new Vector3(0, 0, 0);
+
+                    newDirection = Vector3.Cross(new Vector3(0, 0, 1), position);
+                    position.x = position.y = 0;
+                    newDirection -= position;
+
+                    return newDirection;
+                };
+            }
+            else
             {
-                Vector3 newDirection = new Vector3();
+                //This movement is too "erratic" making new movement for a simple revolve
+                returnedMovement = (Vector3 position, Vector3 direction, GameObject Obj) =>
+                {
+                    Vector3 newDirection = new Vector3();
+                    if (position.sqrMagnitude > maxDistance * maxDistance)
+                    {
+                        newDirection = direction.normalized + Vector3.Cross(Vector3.Cross(position + eccentricityModifier * (eccentricity), direction), direction).normalized * eccentricity;
+                        if (Vector3.Angle(position, newDirection) < 90) newDirection = Vector3.Cross(position + eccentricityModifier * (eccentricity), direction).normalized;
+                        if (Vector3.Angle(direction, position) > 90)
+                        {
+                            newDirection = direction.normalized * eccentricity;
+                        }
+                    }
+                    else if (position.sqrMagnitude < minDistance * minDistance)
+                    {
+                        newDirection = Vector3.Cross(direction, Vector3.Cross(position + eccentricityModifier * eccentricity, direction)).normalized * eccentricity;
+                        if (Vector3.Angle(direction, position) > 90)
+                        {
+                            newDirection = direction.normalized * eccentricity;
+                        }
+                    }
+                    else
+                    {
+                        newDirection = eccentricityModifier * speed * eccentricity * 0.001f;
+                    }
+                    newDirection = newDirection + direction.normalized;
+                    return newDirection.normalized * speed;
+                };
+
+                returnedMovement = (Vector3 position, Vector3 direction, GameObject Obj) =>
+                {
+                    Vector3 newDirection = new Vector3();
 
 
-                newDirection = Vector3.Cross(position, direction);
-                newDirection = Vector3.Cross(newDirection, position);
-                newDirection += -position * (position.sqrMagnitude - minDistance * minDistance);
+                    newDirection = Vector3.Cross(position, direction);
+                    newDirection = Vector3.Cross(newDirection, position);
+                    newDirection += -position * (position.sqrMagnitude - minDistance * minDistance);
 
-                newDirection += Vector3.Cross(Obj.transform.InverseTransformPoint(playerPoint.transform.position),position).normalized;
+                    newDirection += Vector3.Cross(Obj.transform.InverseTransformPoint(playerPoint.transform.position), position).normalized;
 
-                return newDirection.normalized*speed;
-            };
+                    return newDirection.normalized * speed;
+                };
+            }
+
             return returnedMovement;
         }
        

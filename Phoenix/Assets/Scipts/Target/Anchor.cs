@@ -55,7 +55,7 @@ namespace Phoenix {
         {
             transform.localPosition += _lastMove*Time.deltaTime;
             _lastMove = _moveSet(transform.localPosition, _lastMove,gameObject);
-            
+            transform.rotation.SetLookRotation(MovementManager.playerPoint.transform.position - transform.position, new Vector3(0, 0, 1));
         }
 
         public void setInfo(AnchorInfo copy)
