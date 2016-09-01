@@ -4,7 +4,7 @@ using System.Collections;
 namespace Phoenix
 {
     //Not currently in use
-   /* public class MagazineCollider : MonoBehaviour
+    public class MagazineCollider : MonoBehaviour
     {
         public GameObject parentGun;
 
@@ -17,6 +17,6 @@ namespace Phoenix
                 collidingMag.attachMagazine(true, parentGun);
             }
         }
-    }*/
+    }
 }
 

@@ -8,7 +8,7 @@ namespace Phoenix
    //Currently not in use
    
     public class Magazine : NVRInteractableItem
-    {/*
+    {
         //the name of the magazine
         public string MagazineName;
 
@@ -116,6 +116,6 @@ namespace Phoenix
             StopCoroutine(enableCollider());
         }
         #endregion
-        */
+        
     }
 }
