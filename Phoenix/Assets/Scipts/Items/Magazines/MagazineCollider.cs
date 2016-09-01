@@ -3,7 +3,6 @@ using System.Collections;
 
 namespace Phoenix
 {
-    //Not currently in use
     public class MagazineCollider : MonoBehaviour
     {
         public GameObject parentGun;
