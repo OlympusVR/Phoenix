@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 namespace Phoenix
 {
@@ -13,10 +14,13 @@ namespace Phoenix
 
         [Header("Fields below from Gun class")]
         [Space(15)]
-        //can continuously shoot bullets without re-ngaging on true, else need to re-engage.
+
+        //Made visible in inspector to test each one individually, since choosing weaponType has combinations.
+
+        //bullet count will never go down.
         public bool isInfinite;
 
-        //This is for if some guns need engagement, keeping here incase we decide reimplement it but for now it is not used I'm going to take it out.
+        //This is for if some guns need engagement, keeping here incase we decide to re-implement it but for now it is not used.
         public bool needsEngagment = false;
 
         //true if the player can just press and hold to shoot.
@@ -44,7 +48,7 @@ namespace Phoenix
         #region BULLET VARS
         GameObject bulletPrefab;
         bool currentlyShooting;
-        public int _amountOfBullets;
+        private int _amountOfBullets;
         protected int _maxBullets;
         #endregion
 
@@ -55,6 +59,7 @@ namespace Phoenix
 
         #region Properties
 
+        //Made into properties just incase need either of these to be public for whatever reason, like current bullets for UI or whatever.
         bool IsEngaged
         {
             //If it is infinite ammo it will never need engagement(Subject to change)
@@ -79,26 +84,29 @@ namespace Phoenix
         protected virtual void Start()
         {
             //before doing anything, we should initialize the flag values for the gun or next statement will not work
+            gunAnim.GunToAnimate = gameObject.name;
+
+            timeBetweenShots = gunAnim.getAnimSpeed;
             initWeaponFlags(GameConstants.gunTypeInitValues[weaponType]);
            
             //Just to test, prob change depending on gun.
             _maxBullets = 12;
+
             if (!IsEngaged)
             {
+                gunNeedsEngage();
                 SlideEngage = GetComponentInChildren<SlideEngage>();
                 if (SlideEngage != null)
                     //Not using the slideEngage function here because it requires NVR stuff.
                     engageGun();
             }
 
-            gunAnim.GunToAnimate = gameObject.name;
-
-            timeBetweenShots = gunAnim.getAnimSpeed;
         }
 
 
         protected void Update()
         {
+            //Replace for trigger on controller
             if (Input.GetKeyDown(KeyCode.F))
             {
 
@@ -110,6 +118,7 @@ namespace Phoenix
                     autoGunMechanics();
                 
             }
+            //Replace with touchpad on controller
             if (Input.GetKeyDown(KeyCode.E))
                 engageGun();
 
@@ -117,6 +126,7 @@ namespace Phoenix
                 timeSinceLastShot += Time.deltaTime;
         }
         #endregion
+
 
         #region Methods
         void initWeaponFlags(GunTypeInitValues _gunInitValues)
@@ -130,10 +140,16 @@ namespace Phoenix
 
         private void engageGun()
         {
+            gunAnim.playGunAnim("Engage");
             currentBullets = _maxBullets;
             IsEngaged = true;
         }
 
+        private void gunNeedsEngage()
+        {
+            IsEngaged = false;
+            gunAnim.playGunAnim("NeedEngage");
+        }
         
         protected GameObject spawnBullet()
         {
@@ -142,14 +158,15 @@ namespace Phoenix
         }
         virtual protected IEnumerator shootGun()
         { 
-            gunAnim.playShootAnim();
+            gunAnim.playGunAnim("Shoot");
 
             //Sets currentlyShooting to true. This is to make sure they don't shoot more than
-            //max bullets. Because it is a detached thread it will shoot off multiple bullets 
+            //max bullets. Because there are separate threads calling this it will shoot off multiple bullets 
             //before it hits the line for setting engaged to false because other threads are
             //still in here
             
             currentlyShooting = true;
+
             //This delay puts shooting and animation in sync.
             yield return new WaitForSeconds(gunAnim.getAnimSpeed);
             GameObject tempBullet = spawnBullet();
@@ -161,26 +178,25 @@ namespace Phoenix
             {
                 --currentBullets;
                 if (currentBullets == 0)
-                    IsEngaged = false;
+                    gunNeedsEngage();
             }
             tempBullet = null;
-            //This thread ends here so I set this back to false so future threads can 
-            //call this function.
+            
             if (isRepeater)
                 IsEngaged = false;
+            
+            //This thread ends here so I set this back to false so future threads can 
+            //call this function.
             currentlyShooting = false;
 
         }
-        // the mechanics for the automatic guns
+
+        // the mechanics for the automatic guns        
         void autoGunMechanics()
         {
-            if (!IsEngaged)
-            {
-                Debug.Log("Please engage your gun");
-            }
-            else
-            {
-                //Since they can fire while pressing down, need to force some time in between 
+
+            if (IsEngaged)
+            {  //Since they can fire while pressing down, need to force some time in between 
                 //shots so that it's not one big line.
                 if (timeSinceLastShot >= timeBetweenShots)
                 {
@@ -193,16 +209,12 @@ namespace Phoenix
             }
         }
 
-        //the mechanics for non-autmatic guns
+        //the mechanics for non-automatic guns
         void gunMechanics()
         {
-            if (!IsEngaged)
+            if (IsEngaged)
             {
-                Debug.Log("Please engage your gun");
-            }
-            else
-            {
-                //If it's currently shooting then that means a detached thread is still
+                //If it's currently shooting then that means a separate thread is still
                 //going through the shootGun function
                 if (!currentlyShooting)
                     StartCoroutine(shootGun());

@@ -9,10 +9,7 @@ namespace Phoenix
         
         Animator _gunAnimations;
         string _gunToAnimate;
-        static Dictionary<string, int> animGunParams = new Dictionary<string, int>()
-        {
-            {"Revolver",Animator.StringToHash("Revolver") }
-        };
+        string _currentGunState;
 
         public string GunToAnimate
         {
@@ -21,19 +18,21 @@ namespace Phoenix
         }
         public float getAnimSpeed
         {
-            get { return _gunAnimations.speed / 2; }
+            get { return _gunAnimations.speed / 3; }
         }
-        public void playShootAnim()
+        public void playGunAnim(string action)
         {
-            //If it's still playing then restart the current animation
-            if (AnimationStillPlaying)
+            _currentGunState = GunToAnimate + action;
+            //If it's still playing then restart the shooting animation
+            if (AnimationStillPlaying && action == "Shoot" && _currentGunState == "RevolverShoot")
             {
-                _gunAnimations.Play(GunToAnimate, -1, 0f);
-               
+                //Added extra and for revolver shoot because if first 2 are met, don't want for example charge gun to reset.
+                _gunAnimations.Play(_currentGunState, -1, 0f);
+
             }
-            else
-                _gunAnimations.SetTrigger(animGunParams[GunToAnimate]);
+                _gunAnimations.SetTrigger(Animator.StringToHash(_currentGunState));
         }
+
         // Use this for initialization
         void Awake()
         {
@@ -41,7 +40,8 @@ namespace Phoenix
         }
         bool AnimationStillPlaying
         {
-            get { return (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName(GunToAnimate)); }
+            //Checks if the last animation we played is still happening.
+            get { return (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName(_currentGunState)); }
         }
         
       
