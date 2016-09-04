@@ -30,7 +30,7 @@ namespace Phoenix
                 _gunAnimations.Play(_currentGunState, -1, 0f);
 
             }
-                _gunAnimations.SetTrigger(Animator.StringToHash(_currentGunState));
+                _gunAnimations.Play(_currentGunState);
         }
 
         // Use this for initialization

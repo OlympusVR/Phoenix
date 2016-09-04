@@ -43,7 +43,8 @@ namespace Phoenix
         private SlideEngage SlideEngage;
         public Transform firePoint;
 
-        protected GunAnimations gunAnim;
+        private GunSounds gunSounds;
+        private GunAnimations gunAnim;
         //Just doing here since only reason for mag class now would be bullets, might as well put in here.
         #region BULLET VARS
         GameObject bulletPrefab;
@@ -79,6 +80,7 @@ namespace Phoenix
         protected void Awake()
         {
             gunAnim = GetComponent<GunAnimations>();
+            gunSounds = GetComponent<GunSounds>();
             bulletPrefab = Resources.Load("Prefabs/BulletPrefabs/Bullet") as GameObject;
         }
         protected virtual void Start()
@@ -95,10 +97,10 @@ namespace Phoenix
             if (!IsEngaged)
             {
                 gunNeedsEngage();
-                SlideEngage = GetComponentInChildren<SlideEngage>();
+                /*SlideEngage = GetComponentInChildren<SlideEngage>();
                 if (SlideEngage != null)
                     //Not using the slideEngage function here because it requires NVR stuff.
-                    engageGun();
+                    engageGun();*/
             }
 
         }
@@ -140,6 +142,7 @@ namespace Phoenix
 
         private void engageGun()
         {
+            gunSounds.playSoundEffect('e');
             gunAnim.playGunAnim("Engage");
             currentBullets = _maxBullets;
             IsEngaged = true;
@@ -148,7 +151,9 @@ namespace Phoenix
         private void gunNeedsEngage()
         {
             IsEngaged = false;
+            gunSounds.playSoundEffect('n');
             gunAnim.playGunAnim("NeedEngage");
+            
         }
         
         protected GameObject spawnBullet()
@@ -158,8 +163,9 @@ namespace Phoenix
         }
         virtual protected IEnumerator shootGun()
         { 
+            
             gunAnim.playGunAnim("Shoot");
-
+            gunSounds.playSoundEffect('s');
             //Sets currentlyShooting to true. This is to make sure they don't shoot more than
             //max bullets. Because there are separate threads calling this it will shoot off multiple bullets 
             //before it hits the line for setting engaged to false because other threads are
