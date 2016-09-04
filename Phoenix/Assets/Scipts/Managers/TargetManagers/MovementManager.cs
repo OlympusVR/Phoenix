@@ -103,8 +103,6 @@ namespace Phoenix
             {
                 runTime += Time.deltaTime;
                 Vector3 difference = (target.transform.localPosition - position);
-                if (runTime >= time) return difference;
-                else Debug.Log(time-runTime);
                 if ((position - target.transform.localPosition).sqrMagnitude < 0.4) return difference;
                 return (target.transform.localPosition-position)/(time-runTime);
             };
