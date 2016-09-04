@@ -80,19 +80,20 @@ namespace Phoenix
         protected void Awake()
         {
             gunAnim = GetComponent<GunAnimations>();
-            gunSounds = GetComponent<GunSounds>();
+            
             bulletPrefab = Resources.Load("Prefabs/BulletPrefabs/Bullet") as GameObject;
         }
         protected virtual void Start()
-        {
+            //there's a speed issue, it gets component and happens before all other shit is ready to play.
+        {   gunSounds = GetComponent<GunSounds>();
             //before doing anything, we should initialize the flag values for the gun or next statement will not work
             gunAnim.GunToAnimate = gameObject.name;
 
             timeBetweenShots = gunAnim.getAnimSpeed;
             initWeaponFlags(GameConstants.gunTypeInitValues[weaponType]);
-           
+
             //Just to test, prob change depending on gun.
-            _maxBullets = 12;
+            _maxBullets = 6;
 
             if (!IsEngaged)
             {
@@ -213,6 +214,8 @@ namespace Phoenix
                     }
                 }
             }
+            else
+                gunSounds.playSoundEffect('n');
         }
 
         //the mechanics for non-automatic guns
@@ -225,6 +228,8 @@ namespace Phoenix
                 if (!currentlyShooting)
                     StartCoroutine(shootGun());
             }
+            else
+                gunSounds.playSoundEffect('n');
         }
         #endregion
 

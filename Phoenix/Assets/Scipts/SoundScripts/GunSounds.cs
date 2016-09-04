@@ -11,10 +11,10 @@ namespace Phoenix
 
         //Shoot is s, Engage is e, Need to engage is N
         Dictionary<char, AudioSource> gunEffectToPlay;
-        void Start()
+        void Awake()
         {
             gunEffectToPlay = new Dictionary<char, AudioSource>();
-            for (int i = 0; i < transform.childCount; i++)
+         for (int i = 0; i < transform.childCount; i++)
             {
                 //FORGOT TO ADD TAGS.
                 if (transform.GetChild(i).CompareTag("EngageSound"))
@@ -24,6 +24,11 @@ namespace Phoenix
                 if (transform.GetChild(i).CompareTag("NeedEngageSound"))
                     gunEffectToPlay['n'] =  transform.GetChild(i).GetComponent<AudioSource>();
             }
+        }
+        void Start()
+        {
+            //Why are you null? You were working just fucking fine
+          
         }
 
         // Use this for initialization
