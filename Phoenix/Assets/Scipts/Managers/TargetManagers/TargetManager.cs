@@ -12,11 +12,11 @@ namespace Phoenix
         private float PLAYAREAOFFSET = Mathf.Deg2Rad * 90;
         //Wave Constants
         private float PLAYAREA=Mathf.Deg2Rad*90;
-        private float ANCHORLOGBASE = 20;
+        private float ANCHORLOGBASE = 10;
         private float DISTANCESCALECONSTANT = 2;
         private float TIMESCALE = 10;
         //Anchor Constants
-        private float TARGETLOGBASE = 2;
+        private float TARGETLOGBASE = 5;
         private float ANCHORDISTANCE = 5;
         private float ANCHORBASEDISTANCE = 10;
         private float ANCHORRADIUSBASE = 5;
@@ -26,8 +26,9 @@ namespace Phoenix
         private float DISTANCELOGBASE = 2;
         private float MAXTARGETSCALE = 0.03f;
         private float MINTARGETSCALE = 0.02F;
-        private float TARGETSPEEDSCALE = 0.1F;
+        private float TARGETSPEEDSCALE = 0.05F;
 
+        private bool simpleMove = true;
         #endregion
 
         private float timeCounter;
@@ -36,6 +37,11 @@ namespace Phoenix
         private int _anchorCount;
         private int _anchorOn;
         private GameObject[] _activeAnchor;
+
+        [SerializeField]
+        protected GameObject _anchorMoveToPoint;
+        [SerializeField]
+        protected GameObject _PlayerPoint;
 
         [SerializeField]
         private ObjectPool _getAnchor;
@@ -77,9 +83,8 @@ namespace Phoenix
                 currentAnchor.initialPosition = position;
                 currentAnchor.initialMovement = initialMovement;
                 currentAnchor.moveSet = MovementManager.generateAnchorMovement(initialMovement, 
-                        anchorRadius, 
-                        difficultySetting, 
-                        difficultySetting / 6f);
+                        _anchorMoveToPoint, 
+                        30- Mathf.Log(difficultyRating, ANCHORLOGBASE)*Random.value);
                 _anchorList[i] = currentAnchor;
             }
             //Resets the enumerator to start
@@ -97,7 +102,7 @@ namespace Phoenix
             TargetInfo[] tList = new TargetInfo[targetCount];
             for (int i = 0; i < targetCount; i++) 
             {
-                tList[i] = generateTarget(difficulty / targetCount,difficultySetting);
+                tList[i] = generateTarget(difficulty / targetCount,difficultySetting,i,targetCount);
             }
             return tList;
         }
@@ -108,21 +113,35 @@ namespace Phoenix
         /// <param name="difficulty"></param>
         /// <param name="difficultySetting"></param>
         /// <returns></returns>
-        private TargetInfo generateTarget(float difficulty,int difficultySetting)
+        private TargetInfo generateTarget(float difficulty,int difficultySetting,int current,int max)
         {
-            TargetInfo gen;
-            float maxDistance = Mathf.Log(difficulty, DISTANCELOGBASE) * MAXTARGETSCALE;
-            float minDistance = Mathf.Log(difficulty, DISTANCELOGBASE * 2)*MINTARGETSCALE;
-            //randomize Position and initial movement vector
-            Vector3 position = Random.insideUnitSphere*maxDistance;
-            Vector3 movement = Random.onUnitSphere;
-            movement = movement.normalized;
-            gen.initialPosition = position;
-            gen.initialMovement = movement;
-            gen.moveSet =  MovementManager.generateTargetMovement(minDistance, 
-                    maxDistance, 
-                    difficultySetting * TARGETSPEEDSCALE, 
-                    difficultySetting / 6F );
+            TargetInfo gen=new TargetInfo();
+            if (simpleMove)
+            {
+                float distance = 5*MAXTARGETSCALE;
+                float angle = 360 / max * current;
+                gen.initialPosition = new Vector3(distance * Mathf.Sin(Mathf.Deg2Rad * angle), distance * Mathf.Cos(Mathf.Deg2Rad * angle));
+                gen.initialMovement = Vector3.Cross(new Vector3(0,0,1),gen.initialPosition);
+                gen.moveSet = MovementManager.generateTargetMovement(distance,
+                    distance,
+                    difficultySetting * TARGETSPEEDSCALE,
+                    difficultySetting / 6F);
+            }
+            else
+            {
+                float maxDistance = Mathf.Log(difficulty, DISTANCELOGBASE) * MAXTARGETSCALE;
+                float minDistance = Mathf.Log(difficulty, DISTANCELOGBASE * 2) * MINTARGETSCALE;
+                //randomize Position and initial movement vector
+                Vector3 position = Random.insideUnitSphere * maxDistance;
+                Vector3 movement = Random.onUnitSphere;
+                movement = movement.normalized;
+                gen.initialPosition = position;
+                gen.initialMovement = movement;
+                gen.moveSet = MovementManager.generateTargetMovement(minDistance,
+                        maxDistance,
+                        difficultySetting * TARGETSPEEDSCALE,
+                        difficultySetting / 6F);
+            }
             return gen;
         }
         
@@ -181,6 +200,10 @@ namespace Phoenix
             _getAnchor = gameObject.AddComponent<ObjectPool>();
             _getAnchor.objectPrefab = Resources.Load("Prefabs/TargetPrefabs/Anchor") as GameObject;
             initializeWave(100.002f, 1);
+            if (_PlayerPoint != null)
+            {
+                MovementManager.playerPoint = _PlayerPoint;
+            }
         }
     }
 }

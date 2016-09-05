@@ -48,7 +48,7 @@ namespace Phoenix
 
         protected virtual void Awake()
         {
-
+            gameObject.tag = "Target";
             
         }
         protected virtual void Start()
@@ -61,7 +61,7 @@ namespace Phoenix
         {
 
             transform.localPosition += _lastMove * Time.deltaTime;
-            _lastMove = _moveSet(transform.localPosition, _lastMove);
+            _lastMove = _moveSet(transform.localPosition, _lastMove,gameObject);
         }
 
         protected virtual void OnTriggerEnter(Collider hit)
