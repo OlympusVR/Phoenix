@@ -33,6 +33,14 @@ namespace Phoenix
             }
         }
 
+        public int activeObjects
+        {
+            get
+            {
+                return _allObjects.Count - _objectPool.Count;
+            }
+        }
+
         public virtual void initialize()
         {
             initialize(5);
@@ -75,11 +83,15 @@ namespace Phoenix
         public void despawnAllObjects()
         {
             if (_allObjects == null) return;
-            foreach(var x in _allObjects)
+            foreach (var x in _allObjects)
             {
                 if (x.activeInHierarchy)
+<<<<<<< HEAD
 
                     x.GetComponent<PoolObject>().onDeath(x,x.GetComponent<PoolObject>());
+=======
+                    x.GetComponent<PoolObject>().onDeath(x, x.GetComponent<PoolObject>());
+>>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
             }
         }
 

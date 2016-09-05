@@ -78,17 +78,18 @@ namespace Phoenix
                 float anchorRadius = (Random.value - 0.5F) * ANCHORRADIUSVARIANCE + ANCHORRADIUSBASE;
                 //convert polar coordinates to cartesian
                 Vector3 position = new Vector3(distance * Mathf.Cos(angle), 1, distance * Mathf.Sin(angle));
+                currentAnchor.timeToLive = 30 - Mathf.Log(difficultyRating, ANCHORLOGBASE) * Random.value * 2;
                 //Randomize initial Movement Vector
                 Vector3 initialMovement = new Vector3(Random.value, Random.value, Random.value).normalized;
                 currentAnchor.initialPosition = position;
                 currentAnchor.initialMovement = initialMovement;
                 currentAnchor.moveSet = MovementManager.generateAnchorMovement(initialMovement, 
                         _anchorMoveToPoint, 
-                        30- Mathf.Log(difficultyRating, ANCHORLOGBASE)*Random.value);
+                        currentAnchor.timeToLive);
                 _anchorList[i] = currentAnchor;
             }
             //Resets the enumerator to start
-            _anchorOn = -1;
+            _anchorOn = 0;
         }
         /// <summary>
         /// Generate list of Targets based on difficulty level
@@ -144,27 +145,36 @@ namespace Phoenix
             }
             return gen;
         }
-        
+
         #endregion
 
         void Update()
         {
-            if (inWave && activeAnchors < 5)
-            {
-                _anchorOn++;
-                if (_anchorOn < _anchorCount)
-                    for (int i = 0; i < 5; i++)
+            //if the wave is on 
+            if (inWave)
+                if (activeAnchors < 5)
+                {
+                    if (_anchorOn < _anchorCount)
                     {
-                        if (_activeAnchor[i] == null)
+                        for (int i = 0; i < 5; i++)
                         {
-                            GameObject t = _getAnchor.getObject();
-                            _activeAnchor[i] = t;
-                            Anchor curr = t.GetComponent<Anchor>();
-                            curr.setInfo(_anchorList[_anchorOn]);
-                            t.SetActive(true);
-                            break;
+                            if (_activeAnchor[i] == null)
+                            {
+                                GameObject t = _getAnchor.getObject();
+                                _activeAnchor[i] = t;
+                                Anchor curr = t.GetComponent<Anchor>();
+                                curr.setInfo(_anchorList[_anchorOn]);
+                                t.SetActive(true);
+                                break;
+                            }
                         }
+                        _anchorOn++;
                     }
+                }
+            //if no anchors active and no anchors left to spawn, the wave ends
+            if (activeAnchors == 0 && _anchorCount == _anchorOn)
+            {
+                endWave();
             }
             if (timeCounter > Time.time)
             {
@@ -180,14 +190,22 @@ namespace Phoenix
             _getAnchor.despawnAllObjects();
         }
 
-
+        public void startWave()
+        {
+            inWave = true;
+        }
+        private void endWave()
+        {
+            inWave = false;
+            GameManager.gameManager.waveOver();
+        }
       
         int activeAnchors
         {
             get
             {
                 int i = 0;
-                foreach (GameObject a in _activeAnchor) { if (a != null ? (a.GetComponent<Anchor>() is Anchor) : false) i++; }
+                foreach (GameObject a in _activeAnchor) { if (a != null ? (a.activeInHierarchy) : false) i++; }
                 return i;
             }
         }

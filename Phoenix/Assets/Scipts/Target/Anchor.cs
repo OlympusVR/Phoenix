@@ -3,13 +3,14 @@ using System.Collections;
 
 namespace Phoenix {
     public struct AnchorInfo
-        {
-            public TargetInfo[] targetList;
-            public Vector3 initialPosition;
-            public Vector3 initialMovement;
-            public Movement moveSet;
-        
-        }
+    {
+        public TargetInfo[] targetList;
+        public Vector3 initialPosition;
+        public Vector3 initialMovement;
+        public Movement moveSet;
+        public float timeToLive;
+
+    }
     /// <summary>
     /// This script is for handling anchor movement/respawning and spawning targets
     /// </summary>
@@ -25,7 +26,8 @@ namespace Phoenix {
         Movement _moveSet;
         private NavMeshAgent _navAgent;
         private Vector3 _lastMove;
-        private float _anchorSpeed;
+        private float _timeToLive;
+        private float _startTime;
         DeathCall _onDeath;
         
         //List of targets to spawn
@@ -33,6 +35,7 @@ namespace Phoenix {
         private TargetInfo[] _targetList;
         //Amount of targets to spawn
         private int amountToSpawn;
+        float timeToLive;
        
         public DeathCall onDeath
         {
@@ -53,6 +56,17 @@ namespace Phoenix {
 
         private void Update()
         {
+            if (_targetPool.activeObjects == 0)
+            {
+                onDeath(gameObject,this);
+            }
+            if(_startTime+_timeToLive<Time.time)
+            {
+                Debug.Log("AnchorDead");
+                _targetPool.despawnAllObjects();
+                onDeath(gameObject, this);
+            }
+
             transform.localPosition += _lastMove*Time.deltaTime;
             _lastMove = _moveSet(transform.localPosition, _lastMove,gameObject);
             transform.rotation.SetLookRotation(MovementManager.playerPoint.transform.position - transform.position, new Vector3(0, 0, 1));
@@ -60,6 +74,8 @@ namespace Phoenix {
 
         public void setInfo(AnchorInfo copy)
         {
+            _startTime = Time.time;
+            _timeToLive = copy.timeToLive;
             transform.localPosition = copy.initialPosition;
             _lastMove = copy.initialMovement;
             _moveSet = copy.moveSet;
