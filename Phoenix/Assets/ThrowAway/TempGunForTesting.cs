@@ -43,7 +43,7 @@ namespace Phoenix
         private SlideEngage SlideEngage;
         public Transform firePoint;
 
-        private GunSounds gunSounds;
+        private SoundEffects gunSounds;
         private GunAnimations gunAnim;
         //Just doing here since only reason for mag class now would be bullets, might as well put in here.
         #region BULLET VARS
@@ -85,7 +85,7 @@ namespace Phoenix
         }
         protected virtual void Start()
             //there's a speed issue, it gets component and happens before all other shit is ready to play.
-        {   gunSounds = GetComponent<GunSounds>();
+        {   gunSounds = GetComponent<SoundEffects>();
             //before doing anything, we should initialize the flag values for the gun or next statement will not work
             gunAnim.GunToAnimate = gameObject.name;
 
