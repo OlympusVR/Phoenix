@@ -13,22 +13,21 @@ namespace Phoenix
         #region All of the managers
         public static GameManager gameManager;
         public Text playerPointText;
-        private TargetManager _manageAnchors;
-        private Anchor _manageTargets;
+        private TargetManager _enemyManager;
         #endregion
 
-        #region Bools that check whether time target at certain time points have already been spawned
-
-        bool halfTimeSpawnTarget;
-        bool quarterTimeSpawnTarget;
-
-        //Added the suppress warning
-        bool quarterTimeLeftSpawnTarget;
-
-        #endregion
-
-        private RectTransform _endGamePanel;
+        //UI Variables
+        private GameObject _startGamePanel;
+        private GameObject _gameOverPanel;
+        //Updates in game stats
         private Text _displayPoints;
+        private Text _displayTimeLeft;
+        //Final end of game stats
+        //Kinda just went to do in endround function since only need to use in there. Yeah I'll do that, unless we're saving score, well whatever I'll keep as is.
+        private Text _displayTotalPoints;
+        private Text _displayFinalTime;
+        
+
         
         #region Variables managing the round
         private float _roundTimer = 40.0f;
@@ -38,14 +37,15 @@ namespace Phoenix
 
         public int _playerPoints;
 
-        //  public abstract IEnumerator spawnPointTarget(int amountToSpawn);
         public string currentDifficulty
         {
             get; set;
         }
         public float timeLeftInRound
         {
-            set { _timeLeftInRound -= value; }
+            set { _timeLeftInRound = value;
+                _displayTimeLeft.text = _timeLeftInRound.ToString();
+            }
             //return time left to keep track of in UI
             get { return _timeLeftInRound; }
         }
@@ -57,7 +57,7 @@ namespace Phoenix
             set
             {
                 _playerPoints += value;
-                playerPointText.text = "Player Points: " + _playerPoints.ToString();
+                _displayPoints.text = _playerPoints.ToString();
             }
             get { return _playerPoints; }//Returning for UI
         }
@@ -65,15 +65,11 @@ namespace Phoenix
         //Adds time left in round when player kills TimeTarget
         public float addTimeLeftInRound
         {
-            set { _timeLeftInRound += value; }
+            set { _timeLeftInRound += value;}
 
         }
 
-        private void endRound()
-        {
-            _displayPoints.text = playerPoints.ToString();
-            _endGamePanel.gameObject.SetActive(true);
-        }
+      
         private void Awake()
         {
             if (gameManager == null)
@@ -84,40 +80,81 @@ namespace Phoenix
             {
                 Destroy(this);
             }
-            _manageAnchors = GetComponent<TargetManager>();
-            _manageTargets = GetComponent<Anchor>();
+            
+            
 
-          //  _endGamePanel = GameObject.Find("EndGamePanel").GetComponent<RectTransform>();
-           // _displayPoints = _endGamePanel.gameObject.GetComponentInChildren<Text>();
-            _timeLeftInRound = -1.0f;
+            //Getting references to UI
+            _startGamePanel = GameObject.Find("StartGamePanel");
+            _gameOverPanel = GameObject.Find("GameOverPanel");
+            
+            _displayPoints = GameObject.Find("DisplayPoints").GetComponent<Text>();
+            _displayTimeLeft = GameObject.Find("DisplayTimeLeft").GetComponent<Text>();
+            _displayTotalPoints = GameObject.Find("DisplayFinalScore").GetComponent<Text>();
+            _displayFinalTime = GameObject.Find("DisplayFinalTime").GetComponent<Text>();
+
         }
 
         private void Start()
         {
-
-     //       _endGamePanel.gameObject.SetActive(false);
+            _enemyManager = GetComponent<TargetManager>();
+            _gameOverPanel.gameObject.SetActive(false);
+            playerPoints = 0;
+            timeLeftInRound = -1.0f;
         }
 
-        //Instead of doing it on start, it will do when player clicks start button, just start for now
+        #region Game state functions
+        public void GoMainMenu()
+        {
+            _startGamePanel.SetActive(true);
+
+        }
         public void startRound()
         {
+            if (_gameOverPanel.gameObject.activeInHierarchy)
+                _gameOverPanel.SetActive(false);
+            _startGamePanel.SetActive(false);
+            _enemyManager.initializeWave(100.002f, 1);
+
+            _enemyManager.inWave = true;
             _timeLeftInRound = _roundTimer;
+            playerPoints = 0;
         }
+        private void endRound()
+        {
+            _enemyManager.inWave = false;
+            _enemyManager.despawnAllAnchors();
+            _gameOverPanel.SetActive(true);
+            
+            _displayTotalPoints.text = playerPoints.ToString();
+            _displayFinalTime.text = timeLeftInRound.ToString();
+        }
+        
+        public void leaveGame()
+        {
+            //Will only work on build release of game, but does work.
+            Application.Quit();
+        }
+        #endregion
         private void Update()
         {
             if (timeLeftInRound != -1.0f)
             {
                 if (timeLeftInRound > 0)
                 {
-                    timeLeftInRound = Time.deltaTime;
+                    timeLeftInRound -= Time.deltaTime;
+                    _displayTimeLeft.text = timeLeftInRound.ToString();
                 }
                 if (timeLeftInRound <= 0)
                 {
-                    _manageAnchors.despawnAllAnchors();
+                   // _manageAnchors.despawnAllAnchors();
                     endRound();
                 }
 
-           
+                //temp input for showing updating score working.
+                if (Input.GetKeyDown(KeyCode.S))
+                {
+                    playerPoints = 5;
+                }
             }
         }
     }

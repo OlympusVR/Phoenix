@@ -77,7 +77,9 @@ namespace Phoenix
             if (_allObjects == null) return;
             foreach(var x in _allObjects)
             {
-                x.GetComponent<PoolObject>().onDeath(x,x.GetComponent<PoolObject>());
+                if (x.activeInHierarchy)
+
+                    x.GetComponent<PoolObject>().onDeath(x,x.GetComponent<PoolObject>());
             }
         }
 
