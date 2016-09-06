@@ -12,38 +12,33 @@ namespace Phoenix
        
         #region All of the managers
         public static GameManager gameManager;
-        public Text playerPointText;
-<<<<<<< HEAD
         private TargetManager _enemyManager;
-=======
-        private TargetManager _manageAnchors;
->>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
-        #endregion
 
+        #endregion
+        //Might change to level manager? Don't think makes sense as a name tohugh.
+        private LevelAnimations levelAnims;
         //UI Variables
         private GameObject _startGamePanel;
         private GameObject _gameOverPanel;
         //Updates in game stats
+        private int _playerPoints;
         private Text _displayPoints;
-<<<<<<< HEAD
+        private float _timeLeftInRound;
         private Text _displayTimeLeft;
+
         //Final end of game stats
-        //Kinda just went to do in endround function since only need to use in there. Yeah I'll do that, unless we're saving score, well whatever I'll keep as is.
         private Text _displayTotalPoints;
         private Text _displayFinalTime;
         
 
-        
-=======
-
->>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
+      
         #region Variables managing the round
         private int difficulty = 1;
         private int waveNumber = 1;
         private float _totalTime = 40.0f;
         #endregion
 
-        public int _playerPoints;
+ 
 
         public string currentDifficulty
         {
@@ -51,15 +46,14 @@ namespace Phoenix
         }
         public float timeLeftInRound
         {
-<<<<<<< HEAD
             set { _timeLeftInRound = value;
+                //You were working what happend...
                 _displayTimeLeft.text = _timeLeftInRound.ToString();
+
             }
-=======
-            set { _totalTime -= value; }
->>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
+
             //return time left to keep track of in UI
-            get { return _totalTime; }
+            get { return _timeLeftInRound; }
         }
         /// <summary>
         /// This adds to player points and returns the tallied up score when round is over.
@@ -77,24 +71,10 @@ namespace Phoenix
         //Adds time left in round when player kills TimeTarget
         public float addTimeLeftInRound
         {
-<<<<<<< HEAD
             set { _timeLeftInRound += value;}
 
         }
 
-      
-=======
-            set { _totalTime += value; }
-
-        }
-
-        private void endRound()
-        {
-            //uncomment when display is connected
-            //_displayPoints.text = playerPoints.ToString();
-            //_endGamePanel.gameObject.SetActive(true);
-        }
->>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
         private void Awake()
         {
             if (gameManager == null)
@@ -105,9 +85,8 @@ namespace Phoenix
             {
                 Destroy(this);
             }
-<<<<<<< HEAD
-            
-            
+
+            levelAnims = GameObject.Find("Level_Beta").GetComponent<LevelAnimations>();
 
             //Getting references to UI
             _startGamePanel = GameObject.Find("StartGamePanel");
@@ -118,21 +97,17 @@ namespace Phoenix
             _displayTotalPoints = GameObject.Find("DisplayFinalScore").GetComponent<Text>();
             _displayFinalTime = GameObject.Find("DisplayFinalTime").GetComponent<Text>();
 
-=======
-            _manageAnchors = GetComponent<TargetManager>();
 
-          //  _endGamePanel = GameObject.Find("EndGamePanel").GetComponent<RectTransform>();
-           // _displayPoints = _endGamePanel.gameObject.GetComponentInChildren<Text>();
->>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
         }
 
         private void Start()
         {
-<<<<<<< HEAD
+
             _enemyManager = GetComponent<TargetManager>();
             _gameOverPanel.gameObject.SetActive(false);
-            playerPoints = 0;
-            timeLeftInRound = -1.0f;
+            levelAnims.closeShutters();
+            timeLeftInRound = 0;
+
         }
 
         #region Game state functions
@@ -143,40 +118,38 @@ namespace Phoenix
         }
         public void startRound()
         {
+            //if (!levelAnims.ShuttersMoving)
+                levelAnims.openShutters();
             if (_gameOverPanel.gameObject.activeInHierarchy)
                 _gameOverPanel.SetActive(false);
             _startGamePanel.SetActive(false);
+            //This extra call is for retries, otherwise it won't spawn it.
             _enemyManager.initializeWave(100.002f, 1);
+            _enemyManager.startWave();
 
-            _enemyManager.inWave = true;
-            _timeLeftInRound = _roundTimer;
+            timeLeftInRound = _totalTime;
             playerPoints = 0;
+        }
+
+        public void waveOver()
+        {
+            //It's going to open and close after every wave, so for both a small pause between and that will make this an Ienum, this time not just for coroutine but for purpose
+            
+            //levelAnims.closeShutters();
+            
+            _enemyManager.startWave();
+            _enemyManager.initializeWave((playerPoints + 1) * 100.002f, difficulty);
+           // yield return new WaitUntil(() => { return levelAnims.ShuttersStill; });
         }
         private void endRound()
         {
-            _enemyManager.inWave = false;
+            levelAnims.closeShutters();
             _enemyManager.despawnAllAnchors();
             _gameOverPanel.SetActive(true);
             
             _displayTotalPoints.text = playerPoints.ToString();
             _displayFinalTime.text = timeLeftInRound.ToString();
-=======
-     //       _endGamePanel.gameObject.SetActive(false);
         }
-
-
-        public void waveOver()
-        {
-            _manageAnchors.initializeWave((playerPoints+ 1)*100.002f, difficulty);
-        }
-
-        //Instead of doing it on start, it will do when player clicks start button, just start for now
-        public void startRound()
-        {
-            _manageAnchors.startWave();
->>>>>>> 9fe897ff0d7369d9a3533367630db2cf667a5dac
-        }
-        
         public void leaveGame()
         {
             //Will only work on build release of game, but does work.
@@ -185,16 +158,14 @@ namespace Phoenix
         #endregion
         private void Update()
         {
-            if (timeLeftInRound != -1.0f)
+            if (_enemyManager.inWave)
             {
                 if (timeLeftInRound > 0)
                 {
                     timeLeftInRound -= Time.deltaTime;
-                    _displayTimeLeft.text = timeLeftInRound.ToString();
                 }
                 if (timeLeftInRound <= 0)
                 {
-                   // _manageAnchors.despawnAllAnchors();
                     endRound();
                 }
 

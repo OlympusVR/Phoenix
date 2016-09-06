@@ -109,22 +109,7 @@ namespace Phoenix
 
         protected void Update()
         {
-            //Replace for trigger on controller
-            if (Input.GetKeyDown(KeyCode.F))
-            {
-
-                gunMechanics();
-            }
-            if (Input.GetKey(KeyCode.F))
-            {
-                if (isAutomatic)
-                    autoGunMechanics();
-                
-            }
-            //Replace with touchpad on controller
-            if (Input.GetKeyDown(KeyCode.E))
-                engageGun();
-
+            
             if (timeSinceLastShot < timeBetweenShots)
                 timeSinceLastShot += Time.deltaTime;
         }
@@ -141,7 +126,7 @@ namespace Phoenix
             isRepeater = _gunInitValues.isRepeater;
         }
 
-        private void engageGun()
+        public void engageGun()
         {
             gunSounds.playSoundEffect('e');
             gunAnim.playGunAnim("Engage");
@@ -199,7 +184,7 @@ namespace Phoenix
         }
 
         // the mechanics for the automatic guns        
-        void autoGunMechanics()
+        public void autoGunMechanics()
         {
 
             if (IsEngaged)
@@ -219,7 +204,7 @@ namespace Phoenix
         }
 
         //the mechanics for non-automatic guns
-        void gunMechanics()
+        public void gunMechanics()
         {
             if (IsEngaged)
             {
