@@ -106,6 +106,7 @@ namespace Phoenix
             _enemyManager = GetComponent<TargetManager>();
             _gameOverPanel.gameObject.SetActive(false);
             levelAnims.closeShutters();
+            StartCoroutine(levelAnims.MovePanels('s'));
             timeLeftInRound = 0;
 
         }
@@ -119,15 +120,18 @@ namespace Phoenix
         public void startRound()
         {
             //if (!levelAnims.ShuttersMoving)
-                levelAnims.openShutters();
+            levelAnims.openShutters();
+            StartCoroutine(levelAnims.MovePanels('s'));
             if (_gameOverPanel.gameObject.activeInHierarchy)
                 _gameOverPanel.SetActive(false);
             _startGamePanel.SetActive(false);
             //This extra call is for retries, otherwise it won't spawn it.
             _enemyManager.initializeWave(100.002f, 1);
+            //setting time should be before starting wave, so it won't fuck up and spin wrong way.
+            timeLeftInRound = _totalTime;
             _enemyManager.startWave();
 
-            timeLeftInRound = _totalTime;
+           
             playerPoints = 0;
         }
 
@@ -145,6 +149,8 @@ namespace Phoenix
         {
             levelAnims.closeShutters();
             _enemyManager.despawnAllAnchors();
+            
+             StartCoroutine(levelAnims.MovePanels('e'));
             _gameOverPanel.SetActive(true);
             
             _displayTotalPoints.text = playerPoints.ToString();
@@ -165,15 +171,16 @@ namespace Phoenix
                     timeLeftInRound -= Time.deltaTime;
                 }
                 if (timeLeftInRound <= 0)
-                {
+                {   _enemyManager.inWave = false;
                     endRound();
+                    
                 }
 
                 //temp input for showing updating score working.
-                if (Input.GetKeyDown(KeyCode.S))
+               /* if (Input.GetKeyDown(KeyCode.S))
                 {
                     playerPoints = 5;
-                }
+                }*/
             }
         }
     }

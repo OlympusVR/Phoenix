@@ -48,6 +48,7 @@ namespace Phoenix
 
         protected virtual void Awake()
         {
+            _gainedFromTarget = GameObject.Find("GameManager").GetComponent<GameManager>();
             gameObject.tag = "Target";
             
         }

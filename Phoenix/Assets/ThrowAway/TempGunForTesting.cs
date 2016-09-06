@@ -128,6 +128,7 @@ namespace Phoenix
 
         public void engageGun()
         {
+            
             gunSounds.playSoundEffect('e');
             gunAnim.playGunAnim("Engage");
             currentBullets = _maxBullets;

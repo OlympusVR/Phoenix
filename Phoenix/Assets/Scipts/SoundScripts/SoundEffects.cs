@@ -56,6 +56,7 @@ namespace Phoenix
         //was string for anims cause needed but for this
         public void playSoundEffect(char clipToPlay)
         {
+            if (!gunEffectToPlay[clipToPlay].isPlaying)
             gunEffectToPlay[clipToPlay].Play();
         }
         

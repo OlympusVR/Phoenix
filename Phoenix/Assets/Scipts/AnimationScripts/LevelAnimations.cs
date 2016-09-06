@@ -7,9 +7,9 @@ namespace Phoenix
     {
 
         private GameObject _panels;
+        private GameObject player;
         private Animator levelAnims;
         private SoundEffects levelSounds;
-        public Transform target;
 
 
         void Awake()
@@ -21,21 +21,30 @@ namespace Phoenix
         }
 
         //Might have to be coroutine, because opeing and closing shutters and other level anims will be in here, and only using once instance, so can't have main thread stuch in here, unable to do other anims, problem with I don't want to do iENum without something meaningful to yield it/return.
-        public IEnumerator MovePanels(Vector3 playerPos)
+        public IEnumerator MovePanels(char state)
         {
+            
 
-            int panelSpeed = 5;
+            //For now just timer, cause fuck it.
+            float rotateTime = 0;
+            float panelSpeed = 0;
+            if (state == 's')
+                panelSpeed = 35.0f;
+            else if (state == 'e')
+                panelSpeed = 20.0f;
+            //just rotate y.
             do
             {
-                transform.RotateAround(target.position, transform.up, panelSpeed * Time.deltaTime);
-            } while ((playerPos.sqrMagnitude - transform.position.sqrMagnitude) > 1.5f);
-            //This isn't meaningful condition, and bool that's set right before it isn't either. But it's not useless 0 seconds atleast lol, I just need it to be seperate thread, and ahven't looked into threads in c# yet, so unity's built in coroutine will have to suffice.
-            yield return new WaitForEndOfFrame();//Will change to wait till sound is done playing, instead. So it's actually meaningful.
+
+                rotateTime += Time.deltaTime;
+                _panels.transform.Rotate(new Vector3(0, Time.deltaTime * panelSpeed, 0));
+                yield return new WaitForEndOfFrame();
+            } while (rotateTime < 5.0f);
+
 
         }
 
-        //Seperate functions better, than passing in acopied argument. Won't have to check.
-        //And it makes it modular to pass in, but hmm idk what's better, not passing and two seperate, but virtually the same functions, or passing in argument, I used to always to latter, hmm.
+    
 
         public bool ShuttersStill
         {
